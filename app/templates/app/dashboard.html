@@ -1,0 +1,475 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Dashboard · Creaciones Nativas{% endblock %}
+
+{% block content %}
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+    <div class="px-2 sm:px-0">
+      <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">Bienvenid@ 👋 {{ request.user.username }}!</h1>
+      <p class="mt-2 text-slate-600">Panel de control privado.</p>
+    </div>
+
+    <div class="flex gap-2 overflow-x-auto pb-2 px-2 sm:px-0 scrollbar-none">
+      <a href="{% url 'dashboard_inicio' %}" class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-600 ring-1 ring-slate-200 hover:ring-rose-300 transition-all">Inicio</a>
+      <a href="{% url 'dashboard_productos' %}" class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-600 ring-1 ring-slate-200 hover:ring-rose-300 transition-all">Productos</a>
+      <a href="{% url 'dashboard_categorias' %}" class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-600 ring-1 ring-slate-200 hover:ring-rose-300 transition-all">Categorías</a>
+      <a href="{% url 'dashboard_usuarios' %}" class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-600 ring-1 ring-slate-200 hover:ring-rose-300 transition-all">Usuarios</a>
+    </div>
+  </div>
+
+  {% if modo == 'productos_list' %}
+    <div class="mt-7 rounded-3xl bg-white p-4 sm:p-6 shadow-xl shadow-slate-200/40 ring-1 ring-slate-100 overflow-hidden">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-xl font-bold text-slate-900">Inventario de Productos</h2>
+        <a href="{% url 'dashboard_producto_crear' %}" class="rounded-xl bg-rose-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-rose-200 hover:bg-rose-600 transition-all flex items-center justify-center gap-2">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> Nuevo producto
+        </a>
+      </div>
+
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="text-slate-600">
+            <tr>
+              <th class="py-2 pr-3">Nombre</th>
+              <th class="py-2 pr-3">Precio (ARS)</th>
+              <th class="py-2 pr-3 hidden sm:table-cell">Imágenes</th>
+              <th class="py-2 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for p in productos %}
+              <tr class="align-top">
+                <td class="py-3 pr-3 font-semibold text-slate-900">{{ p.nombre }}</td>
+                <td class="py-3 pr-3 text-slate-700">$ {{ p.precio }}</td>
+                <td class="py-3 pr-3 hidden sm:table-cell">
+                  {% if p.imagenes.all %}
+                    <span class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                      <i data-lucide="image" class="w-3.5 h-3.5"></i> {{ p.imagenes.count }}
+                    </span>
+                  {% else %}
+                    <span class="text-slate-300 text-xs">Sin fotos</span>
+                  {% endif %}
+                </td>
+                <td class="py-3 text-right">
+                  <div class="flex justify-end gap-2">
+                    <a href="{% url 'dashboard_producto_editar' p.id %}" class="p-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors" title="Editar">
+                      <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </a>
+                    <a href="{% url 'dashboard_producto_eliminar' p.id %}" class="p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Eliminar">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  {% elif modo == 'producto_form' %}
+    <div class="mt-7 grid gap-8 lg:grid-cols-3">
+      <div class="lg:col-span-2 rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-100">
+        <h2 class="text-2xl font-bold text-slate-900">{% if object %}Editar{% else %}Nuevo{% endif %} Producto</h2>
+
+        <form method="post" enctype="multipart/form-data" class="mt-4 space-y-4">
+          {% csrf_token %}
+          
+          {% if form.errors or imagen_formset.errors %}
+            <div class="p-4 mb-4 text-sm text-red-800 rounded-2xl bg-red-50 ring-1 ring-red-200">
+              <p class="font-bold flex items-center gap-2">
+                <i data-lucide="alert-circle" class="w-4 h-4"></i> Por favor, revisa los errores:
+              </p>
+              <ul class="mt-1 list-disc list-inside space-y-1">
+                {% if imagen_formset.non_form_errors %}
+                  {% for error in imagen_formset.non_form_errors %}
+                    <li>{{ error }}</li>
+                  {% endfor %}
+                {% endif %}
+                {% if form.errors %}<li>Verifica los datos del producto.</li>{% endif %}
+                {% for formset_form in imagen_formset %}
+                  {% if formset_form.errors %}
+                    {% for field in formset_form %}
+                      {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                    {% endfor %}
+                    {% for error in formset_form.non_field_errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  {% endif %}
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <div class="space-y-3">
+            <div>
+              <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="id_categoria">Categoría</label>
+              {{ form.categoria }}
+            </div>
+
+            <div>
+              <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="id_nombre">Nombre</label>
+              {{ form.nombre }}
+            </div>
+
+            <div>
+              <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="id_precio">Precio</label>
+              {{ form.precio }}
+            </div>
+
+            <div>
+              <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="id_descripcion">Descripción</label>
+              {{ form.descripcion }}
+            </div>
+
+            {# El link de pago se configura globalmente en PagoConfiguracion (panel admin) #}
+
+          </div>
+
+          {% if imagen_formset %}
+            <div class="rounded-2xl bg-slate-50 p-6 ring-1 ring-slate-100">
+              <h3 class="font-bold text-slate-900 mb-2">Imagen del Producto (Obligatoria)</h3>
+              <p class="text-xs text-slate-500 mb-4">Solo se permite 1 imagen de alta calidad.</p>
+
+              {{ imagen_formset.management_form }}
+
+              <div class="space-y-4">
+                {% for form_img in imagen_formset %}
+                  <div class="p-4 bg-white rounded-xl ring-1 ring-slate-200">
+                    {{ form_img.id }}
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Selecciona el archivo:</label>
+                    {{ form_img.imagen }}
+                    
+                    <div class="mt-3 flex items-center justify-between">
+                      <div class="hidden">{{ form_img.orden }}</div>
+                      {% if form_img.instance.pk %}
+                        <span class="text-[10px] font-bold text-emerald-600">IMAGEN GUARDADA</span>
+                      {% else %}
+                        <span class="text-[10px] font-bold text-rose-500">NUEVA IMAGEN</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          <button class="w-full rounded-2xl bg-slate-900 px-4 py-4 font-bold text-white shadow-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2" type="submit">
+            <i data-lucide="save" class="w-5 h-5 text-rose-400"></i> Guardar Cambios
+          </button>
+        </form>
+
+      </div>
+
+      <div class="rounded-3xl bg-slate-100/50 p-6 ring-1 ring-slate-100">
+        <h3 class="text-lg font-bold text-slate-900">Previsualización</h3>
+        <p class="mt-1 text-sm text-slate-500">Imágenes guardadas actualmente.</p>
+        <div class="mt-4">
+
+          {% if object and object.imagenes.all %}
+            <div class="grid grid-cols-2 gap-3">
+              {% for img in object.imagenes.all %}
+                <a href="{{ img.imagen.url }}" target="_blank" class="aspect-square rounded-2xl overflow-hidden ring-4 ring-white shadow-md">
+                  <img src="{{ img.imagen.url }}" alt="Imagen" class="h-full w-full object-cover" />
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="flex flex-col items-center justify-center py-10 text-slate-400">
+              <i data-lucide="image-off" class="w-10 h-10 mb-2 opacity-20"></i>
+              <p class="text-xs font-medium">Sin imágenes registradas</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  {% elif modo == 'producto_delete' %}
+    <div class="mt-7 rounded-3xl bg-white/75 p-6 shadow-sm ring-1 ring-pink-100/60">
+      <h2 class="text-xl font-extrabold text-slate-900">Confirmar eliminación</h2>
+      <p class="mt-2 text-slate-600">¿Estás seguro de que deseas eliminar <span class="font-bold">{{ object.nombre }}</span>?</p>
+      <form method="post" class="mt-5 flex gap-2">
+        {% csrf_token %}
+        <button class="rounded-2xl bg-red-500 px-4 py-2 font-extrabold text-white hover:bg-red-600" type="submit">Eliminar</button>
+        <a href="{% url 'dashboard_productos' %}" class="rounded-2xl bg-white/80 px-4 py-2 font-bold text-slate-800 ring-1 ring-pink-100/60 hover:bg-white">Cancelar</a>
+      </form>
+    </div>
+
+  {% elif modo == 'categorias_list' %}
+    <div class="mt-7 rounded-3xl bg-white p-6 shadow-xl shadow-slate-200/40 ring-1 ring-slate-100">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-xl font-bold text-slate-900">Gestión de Categorías</h2>
+        <a href="{% url 'dashboard_categoria_crear' %}" class="rounded-xl bg-rose-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-rose-200 hover:bg-rose-600 transition-all flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> Nueva categoría
+        </a>
+      </div>
+
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="text-slate-600">
+            <tr>
+              <th class="py-2 pr-3">Nombre</th>
+              <th class="py-2 pr-3">Descripción</th>
+              <th class="py-2 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for c in categorias %}
+              <tr class="align-top">
+                <td class="py-3 pr-3 font-semibold text-slate-900">{{ c.nombre }}</td>
+                <td class="py-3 pr-3 text-slate-500">{{ c.descripcion|default:"-"|truncatechars:50 }}</td>
+                <td class="py-3 text-right">
+                  <div class="flex justify-end gap-2">
+                    <a href="{% url 'dashboard_categoria_editar' c.id %}" class="p-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors" title="Editar">
+                      <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </a>
+                    <a href="{% url 'dashboard_categoria_eliminar' c.id %}" class="p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Eliminar">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  {% elif modo == 'categoria_form' %}
+    <div class="mt-7 max-w-2xl mx-auto rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-100">
+      <h2 class="text-2xl font-bold text-slate-900">{% if object %}Editar{% else %}Nueva{% endif %} Categoría</h2>
+      <form method="post" class="mt-4 space-y-4">
+        {% csrf_token %}
+        {% for field in form.visible_fields %}
+          <div>
+            <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}
+              <p class="mt-1 text-xs text-red-500 font-bold">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        <div class="pt-4">
+          <button class="w-full rounded-2xl bg-slate-900 px-4 py-4 font-bold text-white shadow-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2" type="submit">
+            <i data-lucide="save" class="w-5 h-5 text-rose-400"></i> Guardar Categoría
+          </button>
+          <a href="{% url 'dashboard_categorias' %}" class="mt-3 block text-center text-sm font-bold text-slate-500 hover:text-slate-700">Cancelar</a>
+        </div>
+      </form>
+    </div>
+
+  {% elif modo == 'categoria_delete' %}
+    <div class="mt-7 max-w-xl mx-auto rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-100">
+      <div class="flex items-center gap-4 text-rose-600 mb-4">
+        <div class="p-3 bg-rose-50 rounded-2xl">
+          <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+        </div>
+        <h2 class="text-2xl font-black">¿Eliminar categoría?</h2>
+      </div>
+      <p class="text-slate-600 leading-relaxed">Estás por eliminar la categoría <span class="font-bold text-slate-900">{{ object.nombre }}</span>. Ten en cuenta que si tiene productos asociados, no se podrá eliminar por seguridad (PROTECT).</p>
+      <form method="post" class="mt-8 flex flex-col gap-3">
+        {% csrf_token %}
+        <button class="w-full rounded-2xl bg-rose-600 px-4 py-4 font-bold text-white shadow-lg hover:bg-rose-700 transition-all" type="submit">Confirmar eliminación</button>
+        <a href="{% url 'dashboard_categorias' %}" class="w-full text-center py-4 text-sm font-bold text-slate-500 hover:text-slate-800 transition-all">Cancelar y volver</a>
+      </form>
+    </div>
+
+  {% elif modo == 'usuarios_list' %}
+    <div class="mt-7 rounded-3xl bg-white/75 p-5 shadow-sm ring-1 ring-pink-100/60">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-xl font-bold text-slate-900">Gestión de Usuarios</h2>
+        <a href="{% url 'dashboard_usuario_crear' %}" class="rounded-xl bg-rose-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-rose-200 hover:bg-rose-600 transition-all flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-4 h-4"></i> Crear usuario
+        </a>
+      </div>
+
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="text-slate-600">
+            <tr>
+              <th class="py-2 pr-3">Usuario</th>
+              <th class="py-2 pr-3">Nombre</th>
+              <th class="py-2 pr-3">Email</th>
+              <th class="py-2 text-right">Acciones</th>
+              <th class="py-2 text-right">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-pink-100/70">
+            {% for u in usuarios %}
+              <tr class="align-top">
+                <td class="py-3 pr-3 font-semibold text-slate-900">{{ u.username }}</td>
+                <td class="py-3 pr-3 text-slate-700">{{ u.first_name }} {{ u.last_name }} {% if u.is_staff %}<span class="ml-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">Staff</span>{% endif %} {% if u.is_superuser %}<span class="ml-1 inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">Admin</span>{% endif %}</td>
+                <td class="py-3 pr-3 text-slate-700">{{ u.email }}</td>
+                <td class="py-3 pr-3 text-right">
+                  <div class="flex justify-end gap-2">
+                    <a href="{% url 'dashboard_usuario_editar' u.id %}" class="p-2 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors" title="Editar">
+                      <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </a>
+                    <a href="{% url 'dashboard_usuario_eliminar' u.id %}" class="p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Eliminar">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </a>
+                  </div>
+                </td>
+                <td class="py-3 text-right">
+                  <form action="{% url 'dashboard_usuario_toggle_active' u.id %}" method="post" class="inline-block">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold transition-colors
+                      {% if u.is_active %} bg-emerald-50 text-emerald-700 hover:bg-emerald-100 {% else %} bg-red-50 text-red-700 hover:bg-red-100 {% endif %}"
+                      title="{% if u.is_active %}Desactivar{% else %}Activar{% endif %} usuario">
+                      {% if u.is_active %}
+                        <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> Activo
+                      {% else %}
+                        <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i> Inactivo
+                      {% endif %}
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  {% elif modo == 'config_pago' %}
+    <div class="mt-7 rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-100">
+      <h2 class="text-2xl font-bold text-slate-900">Configuración de datos</h2>
+      <p class="mt-2 text-slate-600">Configura los datos globales del sistema.</p>
+
+      <form method="post" class="mt-4 space-y-4">
+        {% csrf_token %}
+        {% for field in form.visible_fields %}
+          <div class="mb-4">
+            <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>
+            {% endif %}
+            {% for error in field.errors %}
+              <p class="mt-1 text-xs text-red-500">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        <button class="w-full rounded-2xl bg-slate-900 px-4 py-4 font-bold text-white shadow-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2" type="submit">
+          <i data-lucide="save" class="w-5 h-5 text-rose-400"></i> Guardar Configuración
+        </button>
+      </form>
+    </div>
+
+  {% elif modo == 'usuarios_create' %}
+    <div class="mt-7 rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-100">
+      <h2 class="text-2xl font-bold text-slate-900">Crear Nuevo Usuario</h2>
+      <form method="post" class="mt-4 space-y-4">
+        {% csrf_token %}
+        {# Renderizar campos de texto/email #}
+        <div>
+          <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="{{ form.username.id_for_label }}">Usuario</label>
+          {{ form.username }}
+          {% for error in form.username.errors %}<p class="mt-1 text-xs text-red-500">{{ error }}</p>{% endfor %}
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="{{ form.first_name.id_for_label }}">Nombre</label>
+          {{ form.first_name }}
+          {% for error in form.first_name.errors %}<p class="mt-1 text-xs text-red-500">{{ error }}</p>{% endfor %}
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="{{ form.last_name.id_for_label }}">Apellido</label>
+          {{ form.last_name }}
+          {% for error in form.last_name.errors %}<p class="mt-1 text-xs text-red-500">{{ error }}</p>{% endfor %}
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="{{ form.email.id_for_label }}">Email</label>
+          {{ form.email }}
+          {% for error in form.email.errors %}<p class="mt-1 text-xs text-red-500">{{ error }}</p>{% endfor %}
+        </div>
+        {# Campos de contraseña #}
+        <div>
+          <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="{{ form.password1.id_for_label }}">Contraseña</label>
+          {{ form.password1 }}
+          {% for error in form.password1.errors %}<p class="mt-1 text-xs text-red-500">{{ error }}</p>{% endfor %}
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="{{ form.password2.id_for_label }}">Confirmar Contraseña</label>
+          {{ form.password2 }}
+          {% for error in form.password2.errors %}<p class="mt-1 text-xs text-red-500">{{ error }}</p>{% endfor %}
+        </div>
+
+        {# Renderizar los checkboxes de roles #}
+        <div class="mt-4 space-y-2">
+          <div class="flex items-center gap-2">{{ form.is_active }}<label for="{{ form.is_active.id_for_label }}" class="text-sm font-medium text-slate-700">Activo</label>{% for error in form.is_active.errors %}<p class="mt-1 text-xs text-red-500">{{ error }}</p>{% endfor %}</div>
+          <div class="flex items-center gap-2">{{ form.is_staff }}<label for="{{ form.is_staff.id_for_label }}" class="text-sm font-medium text-slate-700">Es Staff</label>{% for error in form.is_staff.errors %}<p class="mt-1 text-xs text-red-500">{{ error }}</p>{% endfor %}</div>
+          <div class="flex items-center gap-2">{{ form.is_superuser }}<label for="{{ form.is_superuser.id_for_label }}" class="text-sm font-medium text-slate-700">Es Superusuario</label>{% for error in form.is_superuser.errors %}<p class="mt-1 text-xs text-red-500">{{ error }}</p>{% endfor %}</div>
+        </div>
+
+        <button class="w-full rounded-2xl bg-slate-900 px-4 py-4 font-bold text-white shadow-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2" type="submit">
+          <i data-lucide="user-plus" class="w-5 h-5 text-rose-400"></i> Crear Usuario
+        </button>
+      </form>
+    </div>
+
+  {% elif modo == 'usuario_form' %}
+    <div class="mt-7 rounded-3xl bg-white p-8 shadow-xl ring-1 ring-slate-100">
+      <h2 class="text-2xl font-bold text-slate-900">Editar Usuario</h2>
+      <form method="post" class="mt-4 space-y-4">
+        {% csrf_token %}
+        {% for field in form.visible_fields %}
+          <div class="mb-4">
+            <label class="mb-1 block text-xs font-bold uppercase text-slate-400" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>
+            {% endif %}
+            {% for error in field.errors %}
+              <p class="mt-1 text-xs text-red-500">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        <button class="w-full rounded-2xl bg-slate-900 px-4 py-4 font-bold text-white shadow-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2" type="submit">
+          <i data-lucide="save" class="w-5 h-5 text-rose-400"></i> Guardar Cambios
+        </button>
+      </form>
+    </div>
+
+  {% elif modo == 'usuario_delete' %}
+    <div class="mt-7 rounded-3xl bg-white/75 p-6 shadow-sm ring-1 ring-pink-100/60">
+      <h2 class="text-xl font-extrabold text-slate-900">Confirmar eliminación de usuario</h2>
+      <p class="mt-2 text-slate-600">¿Estás seguro de que deseas eliminar al usuario <span class="font-bold">{{ object.username }}</span>?</p>
+      <form method="post" class="mt-4 space-y-4">
+        {% csrf_token %}
+        <button class="rounded-2xl bg-red-500 px-4 py-2 font-extrabold text-white hover:bg-red-600" type="submit">Eliminar</button>
+        <a href="{% url 'dashboard_usuarios' %}" class="rounded-2xl bg-white/80 px-4 py-2 font-bold text-slate-800 ring-1 ring-pink-100/60 hover:bg-white">Cancelar</a>
+      </form>
+    </div>
+
+  {% else %}
+
+    <div class="mt-7 grid gap-4 sm:grid-cols-2">
+      <div class="rounded-3xl bg-white p-6 shadow-xl ring-1 ring-slate-100">
+        <h2 class="text-lg font-bold text-slate-900">Bienvenid@ 👋 {{ request.user.username }}</h2>
+        <p class="mt-2 text-slate-600">Gestiona los productos y usuarios desde aquí.</p>
+      </div>
+      <div class="rounded-3xl bg-white p-6 shadow-xl ring-1 ring-slate-100">
+        <h2 class="text-lg font-bold text-slate-900">Usuarios Registrados ✔️</h2>
+        <p class="mt-2 text-3xl font-extrabold text-rose-600">{{ usuarios_cantidad }}</p>
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-wrap gap-3">
+      <a href="{% url 'dashboard_productos' %}" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-slate-800 flex items-center gap-2">
+        <i data-lucide="package" class="w-4 h-4 text-rose-400"></i> Gestionar productos
+      </a>
+      <a href="{% url 'dashboard_categorias' %}" class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-600 ring-1 ring-slate-200 hover:ring-rose-300 flex items-center gap-2">
+        <i data-lucide="layers" class="w-4 h-4 text-slate-400"></i> Gestionar categorías
+      </a>
+      <a href="{% url 'dashboard_config_pago' %}" class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-600 ring-1 ring-slate-200 hover:ring-rose-300 flex items-center gap-2">
+        <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i> Configuracion
+      </a>
+      <a href="{% url 'dashboard_usuarios' %}" class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-600 ring-1 ring-slate-200 hover:ring-rose-300 flex items-center gap-2">
+        <i data-lucide="users" class="w-4 h-4 text-slate-400"></i> Gestionar usuarios
+      </a>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block footer %}{% endblock %}

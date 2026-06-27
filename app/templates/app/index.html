@@ -1,0 +1,386 @@
+{% extends 'app/base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Catálogo · Creaciones Nativas{% endblock %}
+
+{% block content %}
+
+<div class="mb-10">
+  <div class="flex items-center justify-center">
+    <div class="flex items-center gap-6 rounded-[2.5rem] bg-white/70 ring-1 ring-rose-100/50 shadow-lg shadow-rose-100/30 px-8 py-5">
+      
+      <img src="{% static 'img/logo.jpg' %}" alt="Creaciones Nativas"
+        class="w-20 h-20 rounded-full object-cover ring-4 ring-rose-100 shadow-md" />
+      
+      <div class="leading-tight">
+        <div class="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Creaciones Nativas</div>
+        <div class="text-sm sm:text-base font-bold text-rose-600 mt-0.5">Catálogo Oficial</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+{% if productos %}
+<!-- Slider / Hero Section -->
+<div
+  class="relative w-full overflow-hidden rounded-[2.5rem] mb-12 shadow-2xl shadow-rose-200/20 ring-1 ring-rose-100/50 group"
+  id="main-slider">
+
+  <div id="slider-track" class="flex transition-transform duration-1000 ease-in-out">
+    {# Mostramos los últimos 5 productos con imagen en el slider #}
+    {% for p in productos|slice:":5" %}
+    {% with first_img=p.imagenes.first %}
+    {% if first_img %}
+    <div class="min-w-full relative aspect-[16/9] md:aspect-[21/7]">
+      <img src="{{ first_img.imagen.url }}" alt="{{ p.nombre }}" class="w-full h-full object-cover">
+      <!-- Capa de degradado para legibilidad -->
+      <div
+        class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent flex flex-col justify-end p-6 sm:p-10 md:p-16">
+        <div class="max-w-2xl">
+          <span
+            class="inline-block px-3 py-1 rounded-full bg-rose-500 text-white text-[10px] font-bold uppercase tracking-widest mb-3">Destacado</span>
+          <h2 class="text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tight leading-none">{{ p.nombre }}
+          </h2>
+          <p
+            class="mt-2 sm:mt-4 text-slate-200 text-xs sm:text-sm md:text-lg font-medium line-clamp-1 sm:line-clamp-2 max-w-lg">
+            {{ p.descripcion }}</p>
+          <div class="mt-6 flex items-center gap-4">
+            <a href="{% url 'producto_detalle' p.id %}"
+              class="px-8 py-3.5 bg-white text-slate-900 rounded-2xl font-black text-sm hover:bg-rose-50 transition-all shadow-lg">Ver
+              Detalles</a>
+            <span class="text-2xl font-black text-rose-500">$ {{ p.precio|intcomma }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endfor %}
+  </div>
+
+  <!-- Controles de Navegación -->
+  <button id="prev-slide"
+    class="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white/20">
+
+    <i data-lucide="chevron-left" class="w-6 h-6"></i>
+  </button>
+  <button id="next-slide"
+    class="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/10 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white/20">
+
+    <i data-lucide="chevron-right" class="w-6 h-6"></i>
+  </button>
+
+  <!-- Indicadores (Puntos) -->
+  <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2" id="slider-dots">
+    <!-- Se generan dinámicamente con JS -->
+  </div>
+</div>
+{% endif %}
+
+
+
+<div id="productos" class="mb-12 scroll-mt-24">
+  <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+
+    <div class="flex-1">
+      <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-slate-900">Nuestra Colección</h1>
+      <p class="mt-2 text-base text-slate-600 max-w-xl">Explorá los productos de alta calidad. Tocá una imagen para ver
+        la galería.</p>
+
+
+      {% if categorias %}
+      <div class="mt-6 flex gap-2 overflow-x-auto pb-4 -mb-2 scrollbar-none sm:flex-wrap sm:overflow-x-visible">
+        <a href="#"
+          class="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-bold transition-all ring-1 duration-200 shrink-0 bg-slate-900 text-white ring-slate-900"
+          data-categoria-name="" data-categoria-active="1" data-search="">
+          Todos
+        </a>
+        {% for c in categorias %}
+        <a href="#"
+          class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-700 ring-1 ring-slate-200 transition-all duration-200 hover:bg-slate-50 shrink-0"
+          data-categoria-name="{{ c.nombre|lower }}" data-categoria-active="0">
+          {{ c.nombre }}
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {% if productos %}
+    <div class="w-full lg:max-w-md">
+      <label class="sr-only" for="search-input">Buscar producto</label>
+      <div class="relative group">
+        <input id="search-input" type="search" placeholder="Buscar por nombre..."
+          class="pl-12 pr-4 py-3.5 w-full rounded-2xl bg-white border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-rose-500 transition-all outline-none shadow-sm text-slate-800" />
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if productos %}
+<div id="products-grid" class="grid gap-6 sm:gap-8 border-t border-slate-100 pt-8 sm:grid-cols-2 lg:grid-cols-3">
+  {% for p in productos %}
+  <div
+    class="product-card group flex flex-col overflow-hidden rounded-[2rem] bg-white shadow-md shadow-slate-100 ring-1 ring-slate-50 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1.5"
+    data-product-name="{{ p.nombre|lower }}" data-product-code="{{ p.codigo|lower }}"
+    data-product-categoria-name="{{ p.categoria.nombre|lower }}">
+
+    <a href="{% url 'producto_detalle' p.id %}"
+      class="block relative overflow-hidden group-hover:opacity-95 transition-opacity">
+      {% with first_image=p.imagenes.all.0 %}
+      {% if first_image %}
+      <div class="w-full aspect-[4/3]">
+        <img src="{{ first_image.imagen.url }}" alt="{{ p.nombre }}"
+          class="w-full h-full object-cover transition duration-500 group-hover:scale-105" />
+      </div>
+      {% else %}
+      <div class="w-full aspect-[4/3] bg-slate-50 flex flex-col items-center justify-center text-slate-400 gap-2">
+        <i data-lucide="image" class="w-8 h-8 text-slate-300"></i>
+        <span class="text-xs font-semibold">Sin imagen</span>
+      </div>
+      {% endif %}
+      {% endwith %}
+    </a>
+
+    <div class="p-6 flex-1 flex flex-col">
+      <div class="flex-1">
+        <a href="{% url 'producto_detalle' p.id %}" class="block group-hover:text-rose-600 transition-colors">
+          <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">{{ p.nombre }}</h2>
+          <div class="mt-1 text-xs font-bold text-slate-600">{{ p.codigo }}</div>
+        </a>
+        <p class="mt-2 text-sm text-slate-500 line-clamp-2 leading-relaxed">{{ p.descripcion }}</p>
+
+      </div>
+
+      <div class="mt-6 flex items-center justify-between gap-3 pt-4 border-t border-slate-50">
+        <div class="text-2xl font-black text-rose-600 tracking-tight">
+          $ {{ p.precio|intcomma }}
+        </div>
+        <a class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition-all duration-200 hover:bg-slate-800 hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+          {% if whatsapp_numero%}href="https://wa.me/+{{ whatsapp_numero }}?text=Hola!%20Quiero%20cotizar%20esta%20pirograbaci%C3%B3n.%20%C2%BFPuedes%20compartirme%20formas%20de%20entrega%3F%20Producto - %20{{ p.nombre|urlencode }} | Codigo%20 {{p.codigo|urlencode}}"
+          {% else %}href="#"
+          onclick="event.preventDefault(); window.__noContactoModal && window.__noContactoModal.open();" {% endif %}
+          target="_blank" rel="noopener">
+          <i data-lucide="message-circle" class="w-4 h-4 text-emerald-400 fill-emerald-400"></i> Consultar por WhatsApp
+        </a>
+
+      </div>
+
+      <div class="mt-3 flex">
+
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="rounded-[2.5rem] bg-white p-16 text-center ring-1 ring-slate-100 shadow-sm max-w-xl mx-auto mt-12">
+  <div class="mx-auto w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mb-6">
+    <i data-lucide="package-search" class="w-8 h-8 text-rose-500"></i>
+  </div>
+  <p class="text-slate-900 text-2xl font-black tracking-tight">Próximamente nuevas piezas</p>
+  <p class="mt-2 text-slate-500">Estamos actualizando nuestro catálogo para ofrecerte lo mejor.</p>
+</div>
+{% endif %}
+
+{% if config_general.mostrar_direccion and config_general.direccion_mapa %}
+<!-- Sección de Mapa Superior -->
+<div class="mb-12 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-rose-200/20 ring-1 ring-rose-100/50 bg-white p-2">
+  <div class="relative w-full h-[300px] md:h-[400px] rounded-[2rem] overflow-hidden">
+    <iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"
+      src="https://maps.google.com/maps?q={{ config_general.direccion_mapa|urlencode }}&t=&z=15&ie=UTF8&iwloc=&output=embed"></iframe>
+    <style>
+      iframe {
+        width: 100% !important;
+        height: 100% !important;
+        border: 0;
+      }
+    </style>
+  </div>
+  <div class="p-6 text-center">
+    <p class="text-slate-500 font-bold text-sm flex items-center justify-center gap-2">
+      <i data-lucide="map-pin" class="w-4 h-4 text-rose-500"></i> ¡Visítanos en nuestro local exclusivo!
+    </p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Modal: Sin contacto disponible -->
+<div id="noContactoModal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-slate-900/60" data-modal-close></div>
+  <div class="relative mx-auto mt-20 max-w-lg rounded-[2rem] bg-white ring-1 ring-slate-100 shadow-2xl">
+    <div class="p-6 sm:p-8">
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+          <i data-lucide="phone-off" class="w-6 h-6"></i>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-xl sm:text-2xl font-black text-slate-900">No hay contacto disponible</h3>
+          <p class="mt-2 text-slate-600 text-sm">En este momento no contamos con un medio de contacto activo.</p>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button type="button"
+          class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-800 transition-all"
+          data-modal-close>Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const modalEl = document.getElementById('noContactoModal');
+    if (!modalEl) return;
+    const open = () => { modalEl.classList.remove('hidden'); window.__noContactoModal = { open }; };
+    window.__noContactoModal = { open };
+
+    document.querySelectorAll('[data-modal-close]').forEach(btn => {
+      btn.addEventListener('click', () => modalEl.classList.add('hidden'));
+    });
+
+    // Click fuera del modal
+    modalEl.addEventListener('click', (e) => {
+      if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-modal-close')) {
+        modalEl.classList.add('hidden');
+      }
+    });
+  })();
+</script>
+
+<!-- Sección Sobre Nosotros -->
+{% if config_general.mostrar_nosotros %}
+<section id="sobre-nosotros" class="mt-24 scroll-mt-24">
+  <div class="rounded-[3rem] bg-slate-900 p-8 md:p-16 text-white shadow-2xl relative overflow-hidden">
+    <div class="absolute top-0 right-0 p-8 opacity-10">
+      <i data-lucide="sparkles" class="w-48 h-48"></i>
+    </div>
+    <div class="max-w-2xl relative z-10">
+      <h2 class="text-4xl font-black tracking-tight mb-6">Sobre Nosotros</h2>
+      <p class="text-slate-300 text-lg leading-relaxed font-medium">
+        {{ config_general.nosotros_texto|default:"Vaguara es más que una tienda, es una experiencia dedicada a quienes
+        buscan calidad y distinción. Trabajamos cada día para ofrecerte lo mejor de nuestra colección." }}
+      </p>
+      {% if config_general.mostrar_email and config_general.local_email %}
+      <div class="mt-8 flex flex-wrap gap-4 text-sm font-bold">
+        <span class="px-4 py-2 rounded-xl bg-white/10 ring-1 ring-white/20 flex items-center gap-2">
+          <i data-lucide="mail" class="w-4 h-4 text-rose-400"></i> {{ config_general.local_email }}
+        </span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const input = document.getElementById('search-input');
+    const cards = document.querySelectorAll('.product-card');
+    if (!cards.length) return;
+
+    function applyFilters() {
+      const q = (input && input.value ? input.value : '').trim().toLowerCase();
+      const activeCat = document.querySelector('[data-categoria-active="1"]');
+      const catName = activeCat ? (activeCat.getAttribute('data-categoria-name') || '') : '';
+
+      // Si el usuario está escribiendo, filtramos por nombre, y también por código.
+      // Si no hay búsqueda, usamos solo categoría.
+
+      cards.forEach(card => {
+        const name = (card.getAttribute('data-product-name') || '');
+        const code = (card.getAttribute('data-product-code') || '');
+        const cardCat = (card.getAttribute('data-product-categoria-name') || '');
+
+        const matchName = q ? name.includes(q) : true;
+        const matchCode = q ? code.includes(q) : true;
+        const matchCat = catName ? cardCat === catName : true;
+
+        // Busca por nombre o por código, manteniendo el filtro por categoría
+        const matchQuery = q ? (matchName || matchCode) : true;
+
+        if (matchQuery && matchCat) {
+          card.style.display = "flex";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    }
+
+    // Intercambio estético y de estados de categorías
+    document.querySelectorAll('[data-categoria-name]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('[data-categoria-name]').forEach(x => {
+          x.setAttribute('data-categoria-active', '0');
+          x.classList.remove('bg-slate-900', 'text-white', 'ring-slate-900');
+          x.classList.add('bg-white', 'text-slate-700', 'ring-slate-200');
+        });
+
+        btn.setAttribute('data-categoria-active', '1');
+        btn.classList.remove('bg-white', 'text-slate-700', 'ring-slate-200');
+        btn.classList.add('bg-slate-900', 'text-white', 'ring-slate-900');
+
+        applyFilters();
+      });
+    });
+
+    if (input) {
+      input.addEventListener('input', applyFilters);
+    }
+
+    applyFilters();
+
+    // Lógica del Slider
+    const track = document.getElementById('slider-track');
+    const slides = track ? track.children : [];
+    const dotsContainer = document.getElementById('slider-dots');
+    const prevBtn = document.getElementById('prev-slide');
+    const nextBtn = document.getElementById('next-slide');
+
+    if (slides.length > 0) {
+      let currentIndex = 0;
+
+      // Crear puntos indicadores
+      Array.from(slides).forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = `h-1.5 rounded-full transition-all duration-300 ${i === 0 ? 'w-8 bg-rose-500' : 'w-2 bg-white/40'}`;
+        dotsContainer.appendChild(dot);
+      });
+
+      const updateSlider = () => {
+        track.style.transform = `translateX(-${currentIndex * 100}%)`;
+        Array.from(dotsContainer.children).forEach((dot, i) => {
+          dot.className = `h-1.5 rounded-full transition-all duration-300 ${i === currentIndex ? 'w-8 bg-rose-500' : 'w-2 bg-white/40'}`;
+        });
+      };
+
+      const nextSlide = () => {
+        currentIndex = (currentIndex + 1) % slides.length;
+        updateSlider();
+      };
+
+      const prevSlide = () => {
+        currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+        updateSlider();
+      };
+
+      // Auto-play cada 5 segundos
+      let autoPlay = setInterval(nextSlide, 5000);
+
+      // Eventos de botones
+      nextBtn.addEventListener('click', () => { clearInterval(autoPlay); nextSlide(); autoPlay = setInterval(nextSlide, 5000); });
+      prevBtn.addEventListener('click', () => { clearInterval(autoPlay); prevSlide(); autoPlay = setInterval(nextSlide, 5000); });
+
+      // Reiniciar iconos de Lucide por si acaso
+      lucide.createIcons();
+    }
+  })();
+</script>
+{% endblock %}

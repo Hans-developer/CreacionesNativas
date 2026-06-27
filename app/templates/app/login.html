@@ -1,0 +1,43 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Acceso · Creaciones Nativas{% endblock %}
+
+{% block content %}
+  <div class="mx-auto w-full max-w-md mt-10 sm:mt-10 px-0">
+
+    <div class="rounded-[2.5rem] bg-white p-8 sm:p-10 shadow-2xl shadow-rose-200/20 ring-1 ring-rose-100/50">
+
+      <h1 class="text-3xl font-black text-slate-900 tracking-tight">Panel Administrador</h1>
+      <p class="mt-2 text-slate-500 font-medium">Gestiona el catálogo de Creaciones Nativas.</p>
+
+      {% if form.errors %}
+        <div class="mt-6 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-600 flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4"></i> Credenciales no válidas.
+        </div>
+      {% endif %}
+
+      <form method="post" class="mt-6 space-y-4">
+        {% csrf_token %}
+
+        <div>
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1" for="id_username">Usuario</label>
+          {{ form.username }}
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1" for="id_password">Contraseña</label>
+          </div>
+          {{ form.password }}
+        </div>
+
+          <a href="{% url 'solicitar_codigo' %}" class="text-xs font-bold text-rose-500 hover:text-rose-600 transition-colors">¿Olvidaste tu contraseña?</a>
+
+
+        <button class="w-full rounded-2xl bg-slate-900 py-3.5 font-bold text-white shadow-lg transition-all hover:bg-slate-800 flex items-center justify-center gap-2" type="submit">
+          <i data-lucide="log-in" class="w-4 h-4"></i> Acceder al sistema
+        </button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

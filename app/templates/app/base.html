@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Creaciones Nativas · Catálogo{% endblock %}</title>
+
+  <!-- Tailwind por CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+
+body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      overflow-x: hidden;
+    }
+
+
+    .bg-pink-glow {
+      background: radial-gradient(circle at 0% 0%, rgba(255, 228, 230, 0.5) 0%, transparent 50%),
+        radial-gradient(circle at 100% 0%, rgba(254, 243, 199, 0.3) 0%, transparent 50%),
+        #fafafa;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="url"],
+    input[type="number"],
+    input[type="search"],
+    textarea,
+    select {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(236, 72, 153, 0.18);
+      background: rgba(255, 255, 255, 0.80);
+      padding: 10px 12px;
+      color: #0f172a;
+      outline: none;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="url"]:focus,
+    input[type="number"]:focus,
+    input[type="search"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: rgba(236, 72, 153, 0.45);
+      box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1);
+    }
+
+    /* Ocultar barra de scroll en navegación horizontal del dashboard */
+    .scrollbar-none::-webkit-scrollbar {
+      display: none;
+    }
+
+    .scrollbar-none {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-pink-glow text-slate-900 antialiased">
+
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-white/70 border-b border-rose-100/50">
+    <div class="mx-auto max-w-6xl px-4 py-3 sm:py-4">
+      <nav class="flex items-center justify-between">
+        <a href="{% url 'catalogo' %}" class="flex items-center gap-2">
+          <span
+            class="inline-flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-200">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </span>
+          <span class="font-extrabold tracking-tight text-lg sm:text-xl text-slate-900">Creaciones Nativas</span>
+        </a>
+
+        <div class="hidden lg:flex items-center gap-8">
+          <a href="/#productos"
+            class="text-sm font-bold text-slate-600 hover:text-rose-500 transition-colors">Productos</a>
+          {% if config_general.mostrar_nosotros %}
+          <a href="/#sobre-nosotros"
+            class="text-sm font-bold text-slate-600 hover:text-rose-500 transition-colors">Nosotros</a>
+          {% endif %}
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3">
+          {% if request.user.is_authenticated %}
+          <a href="{% url 'dashboard_inicio' %}"
+            class="rounded-xl bg-slate-900 px-3 py-2 sm:px-4 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-slate-800 transition-all whitespace-nowrap">
+            Panel
+          </a>
+          <form method="post" action="{% url 'logout' %}" class="hidden">
+            {% csrf_token %}
+          </form>
+          <a href="#" onclick="event.preventDefault(); this.previousElementSibling.submit();"
+            class="rounded-xl bg-white/70 px-2 py-2 sm:px-3 text-xs sm:text-sm font-semibold text-slate-800 shadow-sm hover:bg-white whitespace-nowrap">
+            Cerrar sesión
+          </a>
+          {% else %}
+          <a href="{% url 'dashboard_login' %}"
+            class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 transition-all whitespace-nowrap">
+            Administrador
+          </a>
+          {% endif %}
+        </div>
+
+      </nav>
+    </div>
+  </header>
+
+  {% if messages %}
+  <div class="mx-auto max-w-6xl px-4 mt-4">
+    {% for message in messages %}
+    <div
+      class="rounded-2xl px-4 py-3 text-sm font-bold flex items-center gap-2
+          {% if message.tags == 'error' %} bg-rose-50 text-rose-600 {% elif message.tags == 'success' %} bg-emerald-50 text-emerald-600 {% else %} bg-blue-50 text-blue-600 {% endif %}">
+      {% if message.tags == 'error' %} <i data-lucide="alert-circle" class="w-4 h-4"></i> {% endif %}
+      {% if message.tags == 'success' %} <i data-lucide="check-circle" class="w-4 h-4"></i> {% endif %}
+      {% if message.tags == 'info' %} <i data-lucide="info" class="w-4 h-4"></i> {% endif %}
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+
+  <main class="mx-auto max-w-6xl px-4 py-6 sm:py-8 pb-12">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block footer %}
+  <footer class="bg-white border-t border-rose-100/50 pt-16 pb-8">
+    <div class="mx-auto max-w-6xl px-4">
+      <div class="grid gap-12 md:grid-cols-3 mb-12">
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500 text-white shadow-md">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+            </span>
+            <span class="font-black text-xl text-slate-900">Creaciones Nativas</span>
+          </div>
+          <p class="text-slate-500 text-sm leading-relaxed">Calidad y exclusividad en cada pieza de nuestra colección.
+            Tu estilo, nuestra pasión.</p>
+        </div>
+        <div>
+          <h4 class="font-bold text-slate-900 mb-4 uppercase text-xs tracking-widest">Navegación</h4>
+          <ul class="space-y-2 text-sm font-medium text-slate-600">
+            <li><a href="{% url 'catalogo' %}" class="hover:text-rose-500">Catálogo</a></li>
+            {% if config_general.mostrar_nosotros %}
+            <li><a href="/#sobre-nosotros" class="hover:text-rose-500">Sobre Nosotros</a></li>
+            {% endif %}
+            <li><a href="{% url 'dashboard_login' %}" class="hover:text-rose-500">Acceso Admin</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold text-slate-900 mb-4 uppercase text-xs tracking-widest">Contacto</h4>
+          <div class="flex gap-4 items-center">
+            {% if config_general.mostrar_instagram and config_general.instagram_link %}
+            <a href="{{ config_general.instagram_link }}" target="_blank"
+              class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-rose-500 hover:text-white transition-all shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+              </svg>
+            </a>
+            {% endif %}
+
+            {% if config_general.mostrar_facebook and config_general.facebook_link %}
+            <a href="{{ config_general.facebook_link }}" target="_blank"
+              class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+              </svg>
+            </a>
+            {% endif %}
+
+            {% if config_general.mostrar_email and config_general.local_email %}
+            <a href="mailto:{{ config_general.local_email }}"
+              class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-rose-500 hover:text-white transition-all shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                <rect width="20" height="16" x="2" y="4" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+            </a>
+            {% endif %}
+
+            {% if not config_general.mostrar_email and config_general.local_email and not config_general.mostrar_facebook and config_general.facebook_link and not config_general.mostrar_instagram and config_general.instagram_link %}
+
+            <div>
+              <h4 class="text-center">
+                No hay contactos disponibles
+              </h4>
+
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-slate-100 pt-8 text-center text-xs font-bold text-slate-400">
+        &copy; {% now "Y" %} Creaciones Nativas. Todos los derechos reservados.
+      </div>
+    </div>
+  </footer>
+  {% endblock %}
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        lucide.createIcons();
+      }
+    });
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+
+</html>
